@@ -4,6 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/EDDYCJY/go-gin-example/pkg/setting"
 	"github.com/EDDYCJY/go-gin-example/routers/api/v1"
+	"github.com/EDDYCJY/go-gin-example/routers/api"
+	"github.com/EDDYCJY/go-gin-example/middleware/jwt"
+	_ "github.com/EDDYCJY/go-gin-example/docs"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"net/http"
+	"github.com/EDDYCJY/go-gin-example/pkg/upload"
 )
 
 func InitRouter() *gin.Engine {
@@ -13,9 +20,15 @@ func InitRouter() *gin.Engine {
 
 	r.Use(gin.Recovery())
 
-	gin.SetMode(setting.RunMode)
+	gin.SetMode(setting.ServerSetting.RunMode)
+
+	r.StaticFS("/upload/images", http.Dir(upload.GetImageFullPath()))
+	r.GET("/auth", api.GetAuth)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.POST("/upload", api.UploadImage)
 
 	apiv1 := r.Group("/api/v1")
+	apiv1.Use(jwt.JWT())
 	{
 		//获取标签列表
 		apiv1.GET("/tags", v1.GetTags)
